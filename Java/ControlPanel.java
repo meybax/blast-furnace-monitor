@@ -1,3 +1,5 @@
+// JFRAME MAIN GRAPHICS
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.*;

@@ -1,3 +1,5 @@
+// non-functional for Mac OS 10.14.5
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;

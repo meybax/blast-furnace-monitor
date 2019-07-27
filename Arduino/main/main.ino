@@ -44,7 +44,7 @@ void loop() {
   // update button booleans *
   
   int temp = analogRead(A0);
-  double pressure = analogRead(A1);
+  double pressure = analogRead(A1) * 1.0;
   // process raw data (???) *
   int curr = millis();
   if (millis() % 10 < 3) {
