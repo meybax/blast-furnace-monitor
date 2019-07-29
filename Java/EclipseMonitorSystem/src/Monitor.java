@@ -3,6 +3,11 @@
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/*	In Eclipse,
+ * 		Go to Project -> Properties -> Java Build Path -> Libraries -> Classpath
+ * 		Add external Jar RXTXcomm.jar in "Java/Libraries/rxtx-2.1"
+ * 		Add Native Library path "Java/Libraries/rxtx-2.1"
+ */
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -14,17 +19,20 @@ import gnu.io.SerialPortEventListener;
 import java.util.Enumeration;
 
 public class Monitor implements SerialPortEventListener {
-
+	
+	// variables for serial port communication
 	SerialPort serialPort;
 	private BufferedReader input;
 	private OutputStream output;
 	private static final int TIME_OUT = 2000;
 	private static final int DATA_RATE = 9600;
 	
+	// variables for UI
 	private ControlPanel cp;
 	private LineChart tempChart;
 	private LineChart pressChart;
 	
+	// variables defining byte code for communication (Integer from 0-255)
 	private static final int TEMP_SIGN = 2;
 	private static final int PRESS_SIGN = 3;
 	private static final int LED_SIGN = 4;
@@ -45,12 +53,12 @@ public class Monitor implements SerialPortEventListener {
 			}
 		}, "Shutdown-thread"));
 		findPort();
-      
+
 		cp = new ControlPanel();
 		// adds button events
-   		cp.b1.addActionListener(new ActionListener() {
-   			@Override
-   			public void actionPerformed(ActionEvent arg0) {
+		cp.b1.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
 				if (output != null) {
 					try {
 						output.write(TEMP_SIGN);
@@ -59,8 +67,8 @@ public class Monitor implements SerialPortEventListener {
 					}
 				}				
 			}          
-   		});
-   		cp.b2.addActionListener(new ActionListener() {
+		});
+		cp.b2.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (output != null) {
@@ -71,8 +79,8 @@ public class Monitor implements SerialPortEventListener {
 					}
 				}				
 			}          
-   		});
-   		cp.b3.addActionListener(new ActionListener() {
+		});
+		cp.b3.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				if (output != null) {
@@ -83,20 +91,21 @@ public class Monitor implements SerialPortEventListener {
 					}
 				}
 			}          
-   		});
-      
-   		tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
-   		pressChart = new LineChart("Pressure vs. Time", "Pressure (mPa)");
+		});
+		
+		// creates charts
+		tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
+		pressChart = new LineChart("Pressure vs. Time", "Pressure (mPa)");
 	}
-	
+
 	public void findPort() {
 		CommPortIdentifier portId = null;
 		Enumeration portEnum = CommPortIdentifier.getPortIdentifiers();
 
-		//First, Find an instance of serial port as set in PORT_NAMES.
+		// find an instance of serial port
 		while (portEnum.hasMoreElements()) {
 			CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
-		   if (currPortId.getName().startsWith("/dev/tty.usbmodem")) {
+			if (currPortId.getName().startsWith("/dev/tty.usbmodem")) {
 				portId = currPortId;
 				break;
 			}
@@ -107,7 +116,7 @@ public class Monitor implements SerialPortEventListener {
 		}
 
 		try {
-			// open serial port, and use class name for the appName.
+			// open serial port, and use class name for the appName
 			serialPort = (SerialPort) portId.open(this.getClass().getName(),
 					TIME_OUT);
 
@@ -128,10 +137,11 @@ public class Monitor implements SerialPortEventListener {
 			System.err.println(e.toString());
 		}
 	}
-   
+
 	public synchronized void serialEvent(SerialPortEvent oEvent) {
 		if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
 			try {
+				// detects and reads serial input
 				String inputLine = input.readLine();
 				System.out.println("Java Input: " + inputLine);
 				if (inputLine.startsWith("START")) {
@@ -152,7 +162,6 @@ public class Monitor implements SerialPortEventListener {
 				System.err.println(e.toString());
 			}
 		}
-		// Ignore all the other eventTypes, but you should consider the other ones.
 	}
-   
+
 }
