@@ -9,24 +9,50 @@ int r7 = 10;
 int r8 = 11;
 int r9 = 12;
 
-// button values
-bool openPiston = false;
-bool closePiston = false;
+// remote/local switch
+int remote = 23;
+boolean remoteControl = false;
+
+// booleans for status
+boolean pistonUp = false;
+boolean valveOpen = false;
 
 // data monitoring storage
 int oldTime = 0;
 String pushData = "PUSH:";
 String pullData = "PULL:";
-String tempData = "TEMP:";
-String pressureData = "PRESSURE:";
+
+// button signals
+int insertSign = 5;
+int removeSign = 6;
+int pushSign = 7;
+int pullSign = 8;
+int openValveSign = 9;
+int closeValveSign = 10;
+int openScraperSign = 11;
+int closeScraperSign = 12;
+
+// sensor boundaries
+int maxTemp = 55; // Celcius
+double minPress = 0.4;  // MPa
 
 void setup() {
+  Serial.begin(9600);
+  delay(100);
+  Serial.println("START");
+  Serial.flush();
+  
   // control
   pinMode(r1, OUTPUT);
   pinMode(r2, OUTPUT);
   pinMode(r3, OUTPUT);
   pinMode(r4, OUTPUT);
   pinMode(r5, OUTPUT);
+  digitalWrite(r1, HIGH);
+  digitalWrite(r2, HIGH);
+  digitalWrite(r3, HIGH);
+  digitalWrite(r4, HIGH);
+  digitalWrite(r5, HIGH);
 
   // feedback
   pinMode(r6, INPUT);
@@ -34,82 +60,163 @@ void setup() {
   pinMode(r8, INPUT);
   pinMode(r9, INPUT);
 
+  // initializes status booleans
+  if (digitalRead(r6) == HIGH) {
+    valveOpen = true;
+    Serial.println("VALVE OPEN");
+    Serial.flush();
+  }
+  if (digitalRead(r8) == HIGH) {
+    pistonUp = true;
+    Serial.println("PISTON UP");
+    Serial.flush();
+  }
+
+  // remote/local switch
+  pinMode(remote, INPUT);
+
   // sensors
   pinMode(A0, INPUT);  // temp
   pinMode(A1, INPUT);  // pressure
-
 }
 
 void loop() {
-  // update button booleans *
+  // reads incoming signal
+  if (Serial.available() > 0) {
+    int currByte = Serial.read();
+    Serial.println("MOVE START");
+    Serial.flush();
+    if (currByte == removeSign) {
+      closeScraper();
+      pullPiston();
+      closeValve();
+    } else if (currByte == insertSign) {
+      openValve();
+      pushPiston();
+      openScraper();
+    } else if (currByte == pushSign) {
+      if (valveOpen) {
+        pushPiston();
+      }
+    } else if (currByte == pullSign) {
+      if (valveOpen) {
+        pullPiston();
+      }
+    } else if (currByte == openValveSign) {
+      if (pistonUp) {
+        openValve();
+      }
+    } else if (currByte == closeValveSign) {
+      if (pistonUp) {
+        closeValve();
+      }
+    } else if (currByte == openScraperSign) {
+      openScraper();
+    } else if (currByte == closeScraperSign) {
+      closeScraper();
+    }
+    Serial.println("MOVE END");
+    Serial.flush();
+  }
+
+  // send remote/local data
+  if (digitalRead(remote) == HIGH && !remoteControl) {
+    remoteControl = true;
+    Serial.println("REMOTE ON");
+  } else if (digitalRead(remote) == LOW && remoteControl) {
+    remoteControl = false;
+    Serial.println("REMOTE OFF");
+  }
+  Serial.flush(); 
+
   
   int temp = analogRead(A0);
-  double pressure = analogRead(A1) * 1.0;
-  // process raw data (???) *
-  int curr = millis();
-  if (millis() % 10 < 3) {
-    // record data and time stamp
-    tempData += (String) temp + ";" + curr + ":";
-    pressureData += (String) (int) pressure + ";" + curr + ":";
+  int pressure = analogRead(A1);
+  // process raw data
+  /* for sending and processing data
+  long curr = millis();
+  if (millis() % 10 < 2) {
+    // transmits data and time stamp
+    Serial.println((String) "TEMP:" + curr + ":" + temp + ":");
+    Serial.flush();
+    Serial.println((String) "PRESS:" + curr + ":" + pressure + ":");
+    Serial.flush();
   }
 
-  if (openPiston) {
-    // record time stamp for push
-    pushData += millis() + ":";
-    
-    // open ball-valve
-    digitalWrite(r1, HIGH);
-    while (digitalRead(r6) != HIGH) {
-      delay(10);
-    }
-    digitalWrite(r1, LOW);
-
-    // push piston
-    digitalWrite(r3, HIGH);
-    while(digitalRead(r8) != HIGH) {
-      delay(10);
-    }
-    digitalWrite(r3, LOW);
-
-    // set scraper to open
-    digitalWrite(r5, HIGH);
-
-    openPiston = false;
+  if (temp >= maxTemp || pressure < minPress) {
+    closeScraper();
+    pullPiston();
+    closeValve();
   }
-
-  if (closePiston || temp > 55 || pressure < 0.4) {
-    // record time stamp for pull
-    pullData += millis() + ":";
-
-    // pull piston
-    digitalWrite(r4, HIGH);
-    while(digitalRead(r9) != HIGH) {
-      delay(10);
-    }
-    digitalWrite(r4, LOW);
-
-    // close ball-valve
-    digitalWrite(r2, HIGH);
-    while (digitalRead(r7) != HIGH) {
-      delay(10);
-    }
-    digitalWrite(r2, LOW);
-
-    // set scraper to closed
-    digitalWrite(r5, LOW);
-
-    closePiston = false;
-  }
-
-  int currTime = millis();
-  if (currTime > oldTime + 60) {
-    // send pushData + pullData + tempData + pressureData;
+  
+  long currTime = millis();
+  if (currTime > oldTime + 60000) {
+    // transmits pull and push time stamps
+    Serial.println(pushData);
+    Serial.flush();
+    Serial.println(pullData);
+    Serial.flush();
     
     // redefines/initializes variables
     oldTime = currTime;
     String pushData = "PUSH:";
     String pullData = "PULL:";
-    String tempData = "TEMP:";
-    String pressureData = "PRESSURE:";
   }
+  */
+}
+
+void pullPiston() {
+  digitalWrite(r3, LOW);
+  while(digitalRead(r8) != HIGH) {
+    delay(10);
+  }
+  digitalWrite(r3, HIGH);
+
+  pistonUp = true;
+  Serial.println("PISTON UP");
+  Serial.flush(); 
+}
+
+void pushPiston() {
+  digitalWrite(r4, LOW);
+  while(digitalRead(r9) != HIGH) {
+    delay(10);
+  }
+  digitalWrite(r4, HIGH);
+  
+  pistonUp = false;
+  Serial.println("PISTON DOWN");
+  Serial.flush(); 
+}
+
+void openValve() {
+  digitalWrite(r1, LOW);
+  while (digitalRead(r6) != HIGH) {
+    delay(10);
+  }
+  digitalWrite(r1, HIGH);
+
+  valveOpen = true;
+  Serial.println("VALVE OPEN");
+  Serial.flush(); 
+}
+
+void closeValve() {
+  digitalWrite(r2, LOW);
+  while (digitalRead(r7) != HIGH) {
+    delay(10);
+  }
+  digitalWrite(r2, HIGH);
+
+  valveOpen = false;
+  Serial.println("VALVE CLOSED");
+  Serial.flush(); 
+}
+
+void openScraper() {
+  digitalWrite(r5, LOW);
+}
+
+void closeScraper() {
+  digitalWrite(r5, HIGH);
 }

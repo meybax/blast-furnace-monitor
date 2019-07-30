@@ -33,10 +33,19 @@ public class Monitor implements SerialPortEventListener {
 	private LineChart pressChart;
 	
 	// variables defining byte code for communication (Integer from 0-255)
-	private static final int TEMP_SIGN = 2;
-	private static final int PRESS_SIGN = 3;
-	private static final int LED_SIGN = 4;
-
+	private static final int INSERT_SIGN = 5;
+	private static final int REMOVE_SIGN = 6;
+	private static final int PUSH_SIGN = 7;
+	private static final int PULL_SIGN = 8;
+	private static final int OPEN_V_SIGN = 9;
+	private static final int CLOSE_V_SIGN = 10;
+	private static final int OPEN_S_SIGN = 11;
+	private static final int CLOSE_S_SIGN = 12;
+	
+	// booleans for status
+	private boolean isMoving = false;
+	private boolean remoteControl = false;
+	
 	public static void main(String[] args) {
 		new Monitor().run(args);
 	}
@@ -55,47 +64,51 @@ public class Monitor implements SerialPortEventListener {
 		findPort();
 
 		cp = new ControlPanel();
-		// adds button events
-		cp.b1.addActionListener(new ActionListener() {
-			@Override
+		// adds button events: CHANGE BEHAVIOR
+		cp.insert.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (output != null) {
-					try {
-						output.write(TEMP_SIGN);
-					} catch (IOException e) {
-						System.err.println(e.toString());
-					}
-				}				
+				outputSignal(INSERT_SIGN);			
 			}          
 		});
-		cp.b2.addActionListener(new ActionListener() {
-			@Override
+		cp.remove.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (output != null) {
-					try {
-						output.write(PRESS_SIGN);
-					} catch (IOException e) {
-						System.err.println(e.toString());
-					}
-				}				
+				outputSignal(REMOVE_SIGN);				
 			}          
 		});
-		cp.b3.addActionListener(new ActionListener() {
-			@Override
+		cp.pushPiston.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (output != null) {
-					try {
-						output.write(LED_SIGN);
-					} catch (IOException e) {
-						System.err.println(e.toString());
-					}
-				}
+				outputSignal(PUSH_SIGN);
+			}          
+		});
+		cp.pullPiston.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				outputSignal(PULL_SIGN);
+			}          
+		});
+		cp.openValve.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				outputSignal(OPEN_V_SIGN);
+			}          
+		});
+		cp.closeValve.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				outputSignal(CLOSE_V_SIGN);
+			}          
+		});
+		cp.openScraper.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				outputSignal(OPEN_S_SIGN);
+			}          
+		});
+		cp.closeScraper.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				outputSignal(CLOSE_S_SIGN);
 			}          
 		});
 		
 		// creates charts
-		tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
-		pressChart = new LineChart("Pressure vs. Time", "Pressure (mPa)");
+		// tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
+		// pressChart = new LineChart("Pressure vs. Time", "Pressure (MPa)");
 	}
 
 	public void findPort() {
@@ -105,7 +118,7 @@ public class Monitor implements SerialPortEventListener {
 		// find an instance of serial port
 		while (portEnum.hasMoreElements()) {
 			CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
-			if (currPortId.getName().startsWith("/dev/tty.usbmodem")) {
+			if (currPortId.getName().startsWith("/dev/tty.usbmodem")) { // device for Mac, change for other OS
 				portId = currPortId;
 				break;
 			}
@@ -141,14 +154,14 @@ public class Monitor implements SerialPortEventListener {
 	public synchronized void serialEvent(SerialPortEvent oEvent) {
 		if (oEvent.getEventType() == SerialPortEvent.DATA_AVAILABLE) {
 			try {
-				// detects and reads serial input
+				// detects and reads serial input: CHANGE BEHAVIOR
 				String inputLine = input.readLine();
 				System.out.println("Java Input: " + inputLine);
 				if (inputLine.startsWith("START")) {
-					tempChart.reset();
-					pressChart.reset();
-				} else if (inputLine.startsWith("REMOTE")) {
-					cp.remote.changeColor();
+					// tempChart.reset();
+					// pressChart.reset();
+				
+				// data processing
 				} else if (inputLine.startsWith("TEMP:")) {
 					String line = inputLine.substring(5);
 					String[] vals = line.split(":");
@@ -156,12 +169,58 @@ public class Monitor implements SerialPortEventListener {
 				} else if (inputLine.startsWith("PRESS:")) {
 					String line = inputLine.substring(6);
 					String[] vals = line.split(":");
-					pressChart.add(Integer.parseInt(vals[0]), Double.parseDouble(vals[1]) / 10);
+					pressChart.add(Integer.parseInt(vals[0]), Double.parseDouble(vals[1]));
+				} else if (inputLine.startsWith("PUSH:")) {
+					// store push time-stamp data
+				} else if (inputLine.startsWith("PULL:")) {
+					// store pull time-stamp data
+				
+				// signals
+				} else if (inputLine.startsWith("MOVE")) {
+					if (inputLine.contains("START")) {
+						isMoving = true;
+					} else if (inputLine.contains("END")) {
+						isMoving = false;
+					}
+				} else if (inputLine.startsWith("REMOTE")) {
+					if (inputLine.contains("ON")) {
+						remoteControl = true;
+						cp.remote.turnOn();
+					} else if (inputLine.contains("OFF")) {
+						remoteControl = false;
+						cp.remote.turnOff();
+					}
+				} else if (inputLine.startsWith("PISTON")) {
+					if (inputLine.contains("UP")) {
+						cp.up.turnOn();
+						cp.down.turnOff();
+					} else if (inputLine.contains("OFF")) {
+						cp.up.turnOff();
+						cp.down.turnOn();
+					}
+				} else if (inputLine.startsWith("VALVE")) {
+					if (inputLine.contains("OPEN")) {
+						cp.open.turnOn();
+						cp.close.turnOff();
+					} else if (inputLine.contains("CLOSED")) {
+						cp.open.turnOff();
+						cp.close.turnOn();
+					}
 				}
 			} catch (Exception e) {
 				System.err.println(e.toString());
 			}
 		}
+	}
+	
+	public void outputSignal(int signal) {
+		if (output != null && remoteControl && !isMoving) {
+			try {
+				output.write(signal);
+			} catch (IOException e) {
+				System.err.println(e.toString());
+			}
+		}	
 	}
 
 }

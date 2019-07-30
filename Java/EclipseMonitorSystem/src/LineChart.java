@@ -34,6 +34,8 @@ public class LineChart extends ApplicationFrame {
 
 		final ChartPanel chart = new ChartPanel(xyLineChart);
 		chart.setPreferredSize(new Dimension(560 , 370));
+		chart.setDomainZoomable(false);
+		chart.setRangeZoomable(false);
 		setContentPane(chart);
 
 		pack();

@@ -23,14 +23,19 @@ public class ControlPanel extends JFrame {
 	}};
 	
 	// accessible variables to turn lights on or off
-	public Light light1;
-	public Light light2;
-	public Light light3;
-	public Light light4;
+	public Light open;
+	public Light close;
+	public Light up;
+	public Light down;
 	public Light remote;
-	public ButtonF b1;
-	public ButtonF b2;
-	public ButtonF b3;
+	public ButtonF insert;
+	public ButtonF remove;
+	public ButtonF pushPiston;
+	public ButtonF pullPiston;
+	public ButtonF openValve;
+	public ButtonF closeValve;
+	public ButtonF openScraper;
+	public ButtonF closeScraper;
 
 	// constructs main control panel
 	public ControlPanel() {
@@ -43,7 +48,7 @@ public class ControlPanel extends JFrame {
 
 		// formats frame
 		setTitle("Control Panel");
-		setSize(1200, 500);
+		setSize(1200, 700);
 		setVisible(true);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setResizable(false);
@@ -58,21 +63,21 @@ public class ControlPanel extends JFrame {
 			setBounds(0, 0, 1200, 200);
 
 			// creates lights 
-			light1 = new Light(RED_OFF, 200, 100);
-			light2 = new Light(GREEN_OFF, 433, 100);
-			light3 = new Light(RED_OFF, 666, 100);
-			light4 = new Light(GREEN_OFF, 900, 100);
+			open = new Light(GREEN_OFF, 200, 100, false);
+			close = new Light(RED_ON, 433, 100, true);
+			up = new Light(GREEN_OFF, 666, 100, false);
+			down = new Light(RED_ON, 900, 100, true);
 
-			add(light1);
-			add(light2);
-			add(light3);
-			add(light4);
+			add(open);
+			add(close);
+			add(up);
+			add(down);
 
 			// creates labels for lights: LIGHT NAMES
-			add(new LabelF("Light 1", 200, 50));
-			add(new LabelF("Light 2", 433, 50));
-			add(new LabelF("Light 3", 666, 50));
-			add(new LabelF("Light 4", 900, 50));
+			add(new LabelF("OPEN", 200, 50));
+			add(new LabelF("CLOSE", 433, 50));
+			add(new LabelF("UP", 666, 50));
+			add(new LabelF("DOWN", 900, 50));
 		}
 	}
 
@@ -80,43 +85,64 @@ public class ControlPanel extends JFrame {
 	public class Control extends JPanel {
 		public Control() {
 			// formats control
-			setPreferredSize(new Dimension(1200,200));
+			setPreferredSize(new Dimension(1200,400));
 			setLayout(null);
 			setBounds(0, 200, 1200, 200);
 
 			// creates light and label
-			remote = new Light(YELLOW_ON, 900, 300);
+			remote = new Light(YELLOW_OFF, 900, 300, false);
 			add(remote);
 			add(new LabelF("REMOTE", 900, 250));
 
 			// creates buttons: BUTTON NAMES
-			b1 = new ButtonF("Button 1", 200, 300);
-			b2 = new ButtonF("Button 2", 433, 300);
-			b3 = new ButtonF("Button 3", 666, 300);
+			insert = new ButtonF("INSERT", 200, 310, false);
+			remove = new ButtonF("REMOVE", 525, 310, false);
+			pushPiston = new ButtonF("Push Piston", 200, 500, true);
+			pullPiston = new ButtonF("Pull Piston", 340, 500, true);
+			openValve = new ButtonF("Open Valve", 480, 500, true);
+			closeValve = new ButtonF("Close Valve", 620, 500, true);
+			openScraper = new ButtonF("Open Scraper", 760, 500, true);
+			closeScraper = new ButtonF("Close Scraper", 900, 500, true);
 
-			add(b1);
-			add(b2);
-			add(b3);
+			add(insert);
+			add(remove);
+			add(pushPiston);
+			add(pullPiston);
+			add(openValve);
+			add(closeValve);
+			add(openScraper);
+			add(closeScraper);
 		}
 	}
 
 	// panel for each light, represented by a circle
 	public class Light extends JPanel {
 		private Color c;
+		private boolean on;
 
-		public Light(Color c, int x, int y) {
+		public Light(Color c, int x, int y, boolean on) {
 			// formats light
 			setPreferredSize(new Dimension(100,100));
 			setLayout(null);
 			setBounds(x, y, 100, 100);
 			this.c = c;
+			this.on = on;
 			repaint();
 		}
-
-		// recolors light
-		public void changeColor() {
-			c = ON_OFF.get(c);
-			repaint();
+		
+		public void turnOn() {
+			if (!on) {
+				c = ON_OFF.get(c);
+				repaint();
+				on = true;
+			}
+		}
+		public void turnOff() {
+			if (on) {
+				c = ON_OFF.get(c);
+				repaint();
+				on = false;
+			}
 		}
 
 		@Override
@@ -141,10 +167,18 @@ public class ControlPanel extends JFrame {
 
 	// button with formatting
 	public class ButtonF extends JButton {
-		public ButtonF(String name, int x, int y) {
+		public ButtonF(String name, int x, int y, boolean small) {
 			super(name);
-			setBounds(x, y, 100, 75);
-			setFont(new Font("Arial", Font.PLAIN, 20));
+			int fontSize, width;
+			if (small) {
+				fontSize = 15;
+				width = 120;
+			} else {
+				fontSize = 20;
+				width = 300;
+			}
+			setBounds(x, y, width, 75);
+			setFont(new Font("Arial", Font.PLAIN, fontSize));
 			setFocusPainted(false);
 		}
 	}
