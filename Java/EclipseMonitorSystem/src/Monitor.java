@@ -107,8 +107,8 @@ public class Monitor implements SerialPortEventListener {
 		});
 		
 		// creates charts
-		// tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
-		// pressChart = new LineChart("Pressure vs. Time", "Pressure (MPa)");
+		tempChart = new LineChart("Temperature vs. Time", "Temperature (C)");
+		pressChart = new LineChart("Pressure vs. Time", "Pressure (MPa)");
 	}
 
 	public void findPort() {
@@ -158,8 +158,8 @@ public class Monitor implements SerialPortEventListener {
 				String inputLine = input.readLine();
 				System.out.println("Java Input: " + inputLine);
 				if (inputLine.startsWith("START")) {
-					// tempChart.reset();
-					// pressChart.reset();
+					tempChart.reset();
+					pressChart.reset();
 				
 				// data processing
 				} else if (inputLine.startsWith("TEMP:")) {
@@ -177,34 +177,46 @@ public class Monitor implements SerialPortEventListener {
 				
 				// signals
 				} else if (inputLine.startsWith("MOVE")) {
-					if (inputLine.contains("START")) {
+					if (inputLine.contains(":START")) {
 						isMoving = true;
-					} else if (inputLine.contains("END")) {
+					} else if (inputLine.contains(":END")) {
 						isMoving = false;
 					}
 				} else if (inputLine.startsWith("REMOTE")) {
-					if (inputLine.contains("ON")) {
+					if (inputLine.contains(":ON")) {
 						remoteControl = true;
 						cp.remote.turnOn();
-					} else if (inputLine.contains("OFF")) {
+					} else if (inputLine.contains(":OFF")) {
 						remoteControl = false;
 						cp.remote.turnOff();
 					}
 				} else if (inputLine.startsWith("PISTON")) {
-					if (inputLine.contains("UP")) {
-						cp.up.turnOn();
-						cp.down.turnOff();
-					} else if (inputLine.contains("OFF")) {
-						cp.up.turnOff();
-						cp.down.turnOn();
+					if (inputLine.contains(":UP")) {
+						if (inputLine.contains(":ON")) {
+							cp.up.turnOn();
+						} else if (inputLine.contains(":OFF")) {
+							cp.up.turnOff();
+						}
+					} else if (inputLine.contains(":DOWN")) {
+						if (inputLine.contains(":ON")) {
+							cp.down.turnOn();
+						} else if (inputLine.contains(":OFF")) {
+							cp.down.turnOff();
+						}
 					}
 				} else if (inputLine.startsWith("VALVE")) {
-					if (inputLine.contains("OPEN")) {
-						cp.open.turnOn();
-						cp.close.turnOff();
+					if (inputLine.contains(":OPEN")) {
+						if (inputLine.contains(":ON")) {
+							cp.open.turnOn();
+						} else if (inputLine.contains(":OFF")) {
+							cp.open.turnOff();
+						}
 					} else if (inputLine.contains("CLOSED")) {
-						cp.open.turnOff();
-						cp.close.turnOn();
+						if (inputLine.contains(":ON")) {
+							cp.close.turnOn();
+						} else if (inputLine.contains(":OFF")) {
+							cp.close.turnOff();
+						}
 					}
 				}
 			} catch (Exception e) {

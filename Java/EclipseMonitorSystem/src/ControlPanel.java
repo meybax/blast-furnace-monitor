@@ -64,9 +64,9 @@ public class ControlPanel extends JFrame {
 
 			// creates lights 
 			open = new Light(GREEN_OFF, 200, 100, false);
-			close = new Light(RED_ON, 433, 100, true);
+			close = new Light(RED_OFF, 433, 100, false);
 			up = new Light(GREEN_OFF, 666, 100, false);
-			down = new Light(RED_ON, 900, 100, true);
+			down = new Light(RED_OFF, 900, 100, false);
 
 			add(open);
 			add(close);
