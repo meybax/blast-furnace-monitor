@@ -83,7 +83,6 @@ void loop() {
   int temp = processTemp(tempRaw);
   double pressure = processPressure(pressureRaw);
   if (temp >= maxTemp || pressure < minPress) {
-    /* removes monitor system
     if (digitalRead(r8) != HIGH) {
       closeScraper();
       pullPiston();
@@ -98,11 +97,10 @@ void loop() {
       }
       digitalWrite(r2, HIGH);
     }
-    */
   }
   
   long currTime = millis();
-  if (currTime > oldTime + 60000) {
+  if (currTime > oldTime + 1000) { // 60000) {
     transmitData(currTime, temp, pressure);
   }
 }
@@ -216,10 +214,10 @@ void sendLightStatus() {
 
 void transmitData(long currTime, int temp, double pressure) {
     // transmits pull, push, temperature and pressure data
-    Serial.println(pushData);
+    // Serial.println(pushData);
     Serial.flush();
     delay(10);
-    Serial.println(pullData);
+    // Serial.println(pullData);
     Serial.flush();
     delay(10);
     Serial.println((String) "TEMP:" + currTime + ":" + temp + ":");
@@ -237,11 +235,13 @@ void transmitData(long currTime, int temp, double pressure) {
 
 
 int processTemp(int temp) {
-  return temp;
+  int voltage = map(temp, 0, 1023, 0, 500);
+  return map(voltage, 92, 460, 0, 100);
 }
 
 double processPressure(int pressure) {
-  return (double) pressure;
+  int voltage = map(pressure, 0, 1023, 0, 500);
+  return (double) map(voltage, 92, 460, 0, 160) / 100.0; // EDIT
 }
 
 
