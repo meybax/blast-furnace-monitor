@@ -119,7 +119,7 @@ public class Monitor implements SerialPortEventListener {
 		while (portEnum.hasMoreElements()) {
 			CommPortIdentifier currPortId = (CommPortIdentifier) portEnum.nextElement();
 			if (currPortId.getName().startsWith("/dev/tty.usbmodem")) { // device for Mac, change for other OS
-				portId = currPortId;
+				portId = currPortId;									// for Windows: "COM"
 				break;
 			}
 		}

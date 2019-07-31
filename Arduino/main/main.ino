@@ -83,8 +83,21 @@ void loop() {
   int temp = processTemp(tempRaw);
   double pressure = processPressure(pressureRaw);
   if (temp >= maxTemp || pressure < minPress) {
-    /*
-    
+    /* removes monitor system
+    if (digitalRead(r8) != HIGH) {
+      closeScraper();
+      pullPiston();
+      while (digitalRead(r8) != HIGH) {
+        sendLightStatus();
+        delay(10);
+      }
+      closeValve();
+      while (digitalRead(r7) != HIGH) {
+        sendLightStatus();
+        delay(10);
+      }
+      digitalWrite(r2, HIGH);
+    }
     */
   }
   
@@ -92,7 +105,6 @@ void loop() {
   if (currTime > oldTime + 60000) {
     transmitData(currTime, temp, pressure);
   }
-
 }
 
 
@@ -118,6 +130,7 @@ void readSignal() {
     }
   } else if (currByte == insertSign) {
     if (digitalRead(r9) != HIGH) {
+      openScraper();
       openValve();
       while (digitalRead(r6) != HIGH) {
         sendLightStatus();
@@ -129,7 +142,6 @@ void readSignal() {
         sendLightStatus();
         delay(10);
       }
-      openScraper();
     }
   } else if (currByte == pushSign) {
     pushPiston();
@@ -183,7 +195,6 @@ void sendLightStatus() {
     Serial.flush();
   }
   if (digitalRead(r8) == HIGH && !pistonUpOn) {
-    digitalWrite(r3, HIGH);
     pistonUpOn = true;
     Serial.println("PISTON:UP:ON");
     Serial.flush();
@@ -193,7 +204,6 @@ void sendLightStatus() {
     Serial.flush();
   }
   if (digitalRead(r9) == HIGH && !pistonDownOn) {
-    digitalWrite(r4, HIGH);
     pistonDownOn = true;
     Serial.println("PISTON:DOWN:ON");
     Serial.flush();
@@ -236,25 +246,19 @@ double processPressure(int pressure) {
 
 
 void pullPiston() {
-  if (digitalRead(r6) == HIGH) {
-    digitalWrite(r3, HIGH);
-    digitalWrite(r4, LOW);
-  }
+  digitalWrite(r3, HIGH);
 }
 
 void pushPiston() {
   if (digitalRead(r6) == HIGH) {
-    digitalWrite(r4, HIGH);
     digitalWrite(r3, LOW);
   }
 }
 
 
 void openValve() {
-  if (digitalRead(r8) == HIGH) {
-    digitalWrite(r2, HIGH);
-    digitalWrite(r1, LOW);
-  }
+  digitalWrite(r2, HIGH);
+  digitalWrite(r1, LOW);
 }
 
 void closeValve() {
